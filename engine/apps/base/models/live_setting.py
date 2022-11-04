@@ -56,6 +56,7 @@ class LiveSetting(models.Model):
         "GRAFANA_CLOUD_ONCALL_HEARTBEAT_ENABLED",
         "GRAFANA_CLOUD_NOTIFICATIONS_ENABLED",
         "DANGEROUS_WEBHOOKS_ENABLED",
+        "FEATURE_MATRIX_INTEGRATION_ENABLED",
     )
 
     DESCRIPTIONS = {
@@ -137,6 +138,7 @@ class LiveSetting(models.Model):
         "GRAFANA_CLOUD_ONCALL_HEARTBEAT_ENABLED": "Enable heartbeat integration with Grafana Cloud OnCall.",
         "GRAFANA_CLOUD_NOTIFICATIONS_ENABLED": "Enable SMS/call notifications via Grafana Cloud OnCall",
         "DANGEROUS_WEBHOOKS_ENABLED": "Enable outgoing webhooks to private networks",
+        "FEATURE_MATRIX_INTEGRATION_ENABLED": "Enable (experimental) Matrix integration",
     }
 
     SECRET_SETTING_NAMES = (
