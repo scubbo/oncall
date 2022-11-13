@@ -63,6 +63,12 @@ SWAGGER_SETTINGS = {
     "SUPPORTED_SUBMIT_METHODS": ["get", "post", "put", "delete", "options"],
 }
 
+if os.environ.get("FEATURE_MATRIX_INTEGRATION_ENABLED", "false").lower() != "false":
+    MATRIX_USER_ID = os.environ.get("MATRIX_USER_ID")
+    MATRIX_PASSWORD = os.environ.get("MATRIX_PASSWORD")
+    MATRIX_HOMESERVER = os.environ.get("MATRIX_HOMESERVER")
+    MATRIX_ROOM_ID = os.environ.get("MATRIX_ROOM_ID")
+
 if TESTING:
     EXTRA_MESSAGING_BACKENDS = [("apps.base.tests.messaging_backend.TestOnlyBackend", 42)]
     TELEGRAM_TOKEN = "0000000000:XXXXXXXXXXXXXXXXXXXXXXXXXXXX-XXXXXX"

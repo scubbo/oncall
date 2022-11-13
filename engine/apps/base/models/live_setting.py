@@ -57,6 +57,10 @@ class LiveSetting(models.Model):
         "GRAFANA_CLOUD_NOTIFICATIONS_ENABLED",
         "DANGEROUS_WEBHOOKS_ENABLED",
         "FEATURE_MATRIX_INTEGRATION_ENABLED",
+        "MATRIX_USER_ID",
+        "MATRIX_PASSWORD",
+        "MATRIX_HOMESERVER",
+        "MATRIX_ROOM_ID",
     )
 
     DESCRIPTIONS = {
@@ -139,6 +143,10 @@ class LiveSetting(models.Model):
         "GRAFANA_CLOUD_NOTIFICATIONS_ENABLED": "Enable SMS/call notifications via Grafana Cloud OnCall",
         "DANGEROUS_WEBHOOKS_ENABLED": "Enable outgoing webhooks to private networks",
         "FEATURE_MATRIX_INTEGRATION_ENABLED": "Enable (experimental) Matrix integration",
+        "MATRIX_USER_ID": "Matrix Username",
+        "MATRIX_PASSWORD": "Matrix Password",
+        "MATRIX_HOMESERVER": "Matrix Homeserver",
+        "MATRIX_ROOM_ID": "ID of main room for Matrix Notifications",
     }
 
     SECRET_SETTING_NAMES = (
@@ -153,6 +161,7 @@ class LiveSetting(models.Model):
         "SLACK_SIGNING_SECRET",
         "TELEGRAM_TOKEN",
         "GRAFANA_CLOUD_ONCALL_TOKEN",
+        "MATRIX_PASSWORD",
     )
 
     def __str__(self):

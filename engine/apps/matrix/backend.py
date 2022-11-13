@@ -1,5 +1,5 @@
 from apps.base.messaging import BaseMessagingBackend
-from apps.matrix.tasks import notify_user_async
+from apps.matrix.tasks import notify_user_via_celery
 
 
 class MatrixBackend(BaseMessagingBackend):
@@ -22,6 +22,6 @@ class MatrixBackend(BaseMessagingBackend):
         return {"matrix_handle": f"DEBUG this _would_ be their handle, but now it's just their name: {user.name}"}
 
     def notify_user(self, user, alert_group, notification_policy):
-        notify_user_async.delay(
+        notify_user_via_celery.delay(
             user_pk=user.pk, alert_group_pk=alert_group.pk, notification_policy_pk=notification_policy.pk
         )
