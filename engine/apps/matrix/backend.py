@@ -8,18 +8,12 @@ class MatrixBackend(BaseMessagingBackend):
     short_label = "Matrix"
     available_for_use = True
 
-    # TODO - change these to appropriate values once you actually have messages showing up!
+    # TODO - change these to appropriate values once they're understood
     templater = "apps.email.alert_rendering.AlertEmailTemplater"
     template_fields = ("title", "message")
 
     def serialize_user(self, user):
-        # TODO: This appears to be used in serializing a representation of how to contact the user via
-        # this given backend (see usage in `engine/apps/api/serializers/user.py:get_messaging_backends`,
-        # and implementation in `engine/apps/email/backend.py`).
-        #
-        # I'm not messing with this just yet, since messing with the `user` class to add a new "matrixHandle"
-        # property seems like a bigger change than I should make before actually talking to an Oncall dev!
-        return {"matrix_handle": f"DEBUG this _would_ be their handle, but now it's just their name: {user.name}"}
+        return {"matrix_user_id": user.matrix_user_identity}
 
     def notify_user(self, user, alert_group, notification_policy):
         notify_user_via_celery.delay(

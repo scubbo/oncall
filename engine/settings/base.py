@@ -203,6 +203,7 @@ INSTALLED_APPS = [
     "apps.slack",
     "apps.telegram",
     "apps.twilioapp",
+    "apps.matrix",
     "apps.api",
     "apps.api_for_grafana_incident",
     "apps.base",
