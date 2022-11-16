@@ -21,6 +21,7 @@ client = MatrixClient.login_with_username_and_password(
     "temporary-grafana-device-id",
     settings.MATRIX_HOMESERVER
 )
+logger.fatal("DEBUGGGGGGG - here next")
 
 
 @shared_dedicated_queue_retry_task(autoretry_for=(Exception,), retry_backoff=True, max_retries=MAX_RETRIES)

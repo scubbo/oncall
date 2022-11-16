@@ -16,7 +16,8 @@ class Migration(migrations.Migration):
             name='MatrixUserIdentity',
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
-                ('matrix_user_id', models.CharField(max_length=100))
+                ('user_id', models.CharField(max_length=100)),
+                ('paging_room', models.CharField(max_length=100)),
             ]
         )
     ]
