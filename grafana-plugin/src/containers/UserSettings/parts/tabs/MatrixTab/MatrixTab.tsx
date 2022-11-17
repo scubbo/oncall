@@ -29,6 +29,7 @@ export const MatrixInfo = observer((props: MatrixInfoProps) => {
   const getMatrixIdentityUserIdUpdateHandler = useCallback(
     async (event) => {
       const updated_matrix_user_id = event.target.value;
+      console.log('Updated code');
       console.log("updated_matrix_user_id is: " + updated_matrix_user_id);
       console.log('User pk is ' + user.pk);
       console.log('User email is ' + user.email);

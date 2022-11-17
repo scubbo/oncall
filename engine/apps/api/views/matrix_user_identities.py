@@ -5,15 +5,15 @@ from apps.api.permissions import MODIFY_ACTIONS, READ_ACTIONS, ActionPermission,
 from apps.api.serializers.matrix_user_identity import MatrixUserIdentitySerializer
 from apps.auth_token.auth import PluginAuthentication
 from common.api_helpers.mixins import PublicPrimaryKeyMixin
+from common.insight_log import EntityEvent, write_resource_insight_log
+
+import logging
+logger = logging.getLogger(__name__)
 
 
 class MatrixUserIdentityView(
     PublicPrimaryKeyMixin,
-    mixins.CreateModelMixin,
-    mixins.UpdateModelMixin,
-    mixins.RetrieveModelMixin,
-    mixins.ListModelMixin,
-    viewsets.GenericViewSet
+    viewsets.ModelViewSet
 ):
     authentication_classes = (PluginAuthentication,)
     permission_classes = (IsAuthenticated, ActionPermission)
@@ -24,3 +24,12 @@ class MatrixUserIdentityView(
     }
 
     serializer_class = MatrixUserIdentitySerializer
+
+    def perform_create(self, serializer):
+        logger.fatal(f'DEBUG - perform_create called with {serializer=}, {self.request=}')
+        serializer.save()
+        write_resource_insight_log(
+            instance=serializer.instance,
+            author=self.request.user,
+            event=EntityEvent.CREATED,
+        )

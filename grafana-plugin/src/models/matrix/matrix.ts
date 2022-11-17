@@ -21,10 +21,12 @@ export class MatrixStore extends BaseStore {
   @action
   async createMatrixUserIdentity(data: any) {
     const identity = await this.create(data);
+    console.log('Created identity is ');
+    console.log(identity);
 
     this.items = {
       ...this.items,
-      [identity.id]: identity,
+      [identity.pk]: identity,
     };
 
     return identity;
@@ -36,7 +38,7 @@ export class MatrixStore extends BaseStore {
 
     this.items = {
       ...this.items,
-      [identity.id]: identity,
+      [identity.pk]: identity,
     };
   }
 
