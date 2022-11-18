@@ -3,7 +3,10 @@ import logging
 
 from sys import exit
 
+
 from nio import AsyncClient, LoginResponse, MatrixRoom, RoomMessageText
+
+from .rooms import room_name_normalizer
 
 ROOM_MESSAGE_TYPE = "m.room.message"
 TEXT_CONTENT_TYPE = "m.text"
@@ -60,21 +63,17 @@ class MatrixClient(object):
             print(f"Failed to log in: {resp}")
             exit(1)
 
-    # TODO - need to handle joining the room if not already joined
-
-    async def send_message(
+    @room_name_normalizer()
+    async def send_message_to_room(
             self,
-            room_alias: str,
+            room_name: str,
             # message_text: RoomMessageText):
             # TODO - find out how to create a RoomMessageText properly (looks like formatting is a big deal)
             message_text: str):
         # TODO - explore the other attributes of RoomMessageText and see what use they might have
         # TODO - look into how far we should allow nio's classes to "leak" out into the app.
-        room_resolution_response = await self.client.room_resolve_alias(room_alias)
-        room_id = room_resolution_response.room_id
-        logging.debug(f'{room_id=}')
         await self.client.room_send(
-            room_id=room_id,
+            room_id=room_name,
             message_type=ROOM_MESSAGE_TYPE,
             content={
                 "msgtype": TEXT_CONTENT_TYPE,
@@ -83,23 +82,50 @@ class MatrixClient(object):
                 "formatted_body": message_text
             }
         )
-        await self.client.sync_forever(timeout=30000)
 
-    async def send_message_to_room_id(
-            self,
-            room_id: str,
-            # message_text: RoomMessageText):
-            # TODO - find out how to create a RoomMessageText properly (looks like formatting is a big deal)
-            message_text: str):
-        await self.client.room_send(
-            room_id=room_id,
-            message_type=ROOM_MESSAGE_TYPE,
-            content={
-                "msgtype": TEXT_CONTENT_TYPE,
-                "body": message_text,
-                "format": "org.matrix.custom.html",
-                "formatted_body": message_text
-            }
-        )
-        await self.client.sync_forever(timeout=30000)
+    @room_name_normalizer()
+    async def join_room(self, room_name: str):
+        # This returns a `Union[JoinResponse, JoinError]`, which I think is more Go-style
+        # than Pythonic. If we wanted to check return type and take differing action
+        # based on that, this would probably be the place to check and throw an Exception.
+        # I'll leave it up to the Oncall team what code style they want.
+        return await self.join_room(room_name)
+
+    @room_name_normalizer()
+    async def is_in_room(self, room_name: str):
+        # If we really wanted, we could maintain a set of "joined_rooms" in the client,
+        # update it every time `join_room` (or a hypothetical `leave_room`) is called,
+        # and avoid a network call for this method. But that complexity doesn't seem
+        # worth the latency gain - in particular, note that you'd have to account for
+        # room-aliases, which could change without warning, so you'd need to be
+        # listening for room update events in order to stay up-to-date. Better, I think,
+        # to just go to the source of truth. Until latency becomes a limiting factor) - YAGNI
+        #
+        # See also the comment on `join_room` about Union-type responses encoding success/failure
+        return (await self.normalize_room_name(room_name)) in (await self.client.joined_rooms()).rooms
+
+    async def normalize_room_name(self, room_name: str) -> str:
+        """
+        Rooms can be referred to by:
+        * a room_id - a single canonical identifier for a room, of the form
+            `!<SomeLettersOfVaryingCase>:<homeserver_domain>`
+        * a room_alias - of which one room can have many, of the form
+            `#<FriendlyName>:<homeserver_domain>`
+
+        This method accepts a name of either(/unknown) type, and normalizes
+        to the canonical room_id.
+
+        (Note the intentional use of the noun "name" to encompass both
+        `id` and `alias`. If you can think of a better noun, please adopt it!)
+        """
+        # TODO - repeated points about exceptions vs. Union-type response
+        # TODO - (maybe) expand this to accept identifiers without the homeserver domain?
+        # Or handle that upstream in the UI and only use, uhh, FQRNs internally?
+        if room_name.startswith("!"):
+            return room_name
+        normalization_response = await self.client.room_resolve_alias(room_name)
+        print(f'{normalization_response=}')
+        print(f'{normalization_response.room_id=}')
+        return normalization_response.room_id
+
 
