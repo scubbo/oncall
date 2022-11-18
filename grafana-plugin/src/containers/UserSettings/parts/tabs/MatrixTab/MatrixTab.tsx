@@ -29,45 +29,31 @@ export const MatrixInfo = observer((props: MatrixInfoProps) => {
   const getMatrixIdentityUserIdUpdateHandler = useCallback(
     async (event) => {
       const updated_matrix_user_id = event.target.value;
-      console.log('Updated code');
-      console.log("updated_matrix_user_id is: " + updated_matrix_user_id);
-      console.log('User pk is ' + user.pk);
-      console.log('User email is ' + user.email);
+      console.log('Updated matrix.ts to use abstract method');
 
-      const currentMatrixIdForeignKey = user.matrix_user_identity;
-      console.log('Current foreign key is ' + currentMatrixIdForeignKey);
+      var matrixUserIdPrimaryKey = user.matrix_user_identity;
+      console.log('Current userId PrimaryKey is ' + matrixUserIdPrimaryKey);
 
-      if (currentMatrixIdForeignKey == null) {
-        console.log("foreign key is null");
-        const matrix_create_response = await matrixStore.createMatrixUserIdentity({
-          user_id: updated_matrix_user_id,
-          paging_room: "placeholder room"
-        });
-
-        console.log(matrix_create_response)
-      } else {
-        await matrixStore.updateMatrixUserIdentity(currentMatrixIdForeignKey, {
-          user_id: updated_matrix_user_id,
-          paging_room: "placeholder room"
-        });
+      if (matrixUserIdPrimaryKey == null) {
+        // User has no associated MatrixUserId - create one for them
+        const createMatrixUserIdentityResponse = await userStore.createEmptyMatrixUserIdentity(user);
+        console.log(createMatrixUserIdentityResponse);
+        matrixUserIdPrimaryKey = createMatrixUserIdentityResponse.id
+        console.log('primary key of new matrix_user_id is now ');
+        console.log(matrixUserIdPrimaryKey);
       }
 
-//       await userStore.loadUser(userPk);
-//       const updated_user_info = userStore.items[userPk];
-//       console.log(updated_user_info);
+      await matrixStore.updateMatrixUserIdentity(matrixUserIdPrimaryKey, {
+        user_id: updated_matrix_user_id,
+        paging_room: "placeholder room"
+      });
 
     },
-//     [user, matrixStore, matrixStore.createMatrixUserIdentity, matrixStore.updateMatrixUserIdentity]
-    [user, matrixStore.createMatrixUserIdentity, matrixStore.updateMatrixUserIdentity]
+    [user, userStore.createEmptyMatrixUserIdentity, matrixStore.updateMatrixUserIdentity]
   )
 
   return (
     <VerticalGroup>
-{/*       <HorizontalGroup> */}
-{/*         <Text> */}
-{/*           {"Content of Text" + (user_matrix_identity === undefined ? "a" : "b")} */}
-{/*         </Text> */}
-{/*       </HorizontalGroup> */}
 
       <HorizontalGroup>
         <Text>

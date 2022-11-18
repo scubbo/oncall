@@ -10,18 +10,16 @@ from common.custom_celery_tasks import shared_dedicated_queue_retry_task
 from .client import MatrixClient
 
 
-
 MAX_RETRIES = 1 if settings.DEBUG else 10
 logger = get_task_logger(__name__)
 
-logger.fatal("DEBUGGGGGGG - here")
+# TODO - make this a singleton!
 client = MatrixClient.login_with_username_and_password(
     settings.MATRIX_USER_ID,
     settings.MATRIX_PASSWORD,
     "temporary-grafana-device-id",
     settings.MATRIX_HOMESERVER
 )
-logger.fatal("DEBUGGGGGGG - here next")
 
 
 @shared_dedicated_queue_retry_task(autoretry_for=(Exception,), retry_backoff=True, max_retries=MAX_RETRIES)
@@ -59,6 +57,11 @@ def notify_user_via_celery(user_pk, alert_group_pk, notification_policy_pk):
         )
         logger.error("Error while sending Matrix message: no User Identity to send to")
         return
+
+    identity = user.matrix_user_identity
+    paging_room = identity.paging_room
+
+
 
 
     asyncio.run(client.send_message_to_room_id(settings.MATRIX_ROOM_ID, f"New version - notify {user.matrix_user_identity}"))

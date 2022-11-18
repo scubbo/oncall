@@ -13,7 +13,7 @@ class MatrixBackend(BaseMessagingBackend):
     template_fields = ("title", "message")
 
     def serialize_user(self, user):
-        return {"matrix_user_id": user.matrix_user_identity}
+        return {key: user.getattr(key) for key in ['user_id', 'name', 'matrix_user_identity']}
 
     def notify_user(self, user, alert_group, notification_policy):
         notify_user_via_celery.delay(

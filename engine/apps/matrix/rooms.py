@@ -8,12 +8,6 @@ from typing import Any, Callable, List, Mapping
 #     in basically every function in the client
 # * On the other hand, it is pretty darn magical (not a compliment!), and relies heavily on
 #     naming and calling convention:
-<<<<<<< Updated upstream
-#   - The wrapped function must be called with `room_name` as a keyword argument, or `room_name`
-#       must be the first positional argument in the function signature.
-#   - The wrapped function must be a function on an object, and the object must provide a function
-#       named `normalize_room_name` with a signature of `(room_name: str) -> str`
-=======
 #   - The wrapped function must be asynchronous, and must be called with `room_name` as a keyword argument,
 #       or `room_name` must be the first positional argument in the function signature.
 #   - The wrapped function must be a function on an object, and the object must provide an
@@ -21,7 +15,6 @@ from typing import Any, Callable, List, Mapping
 #
 # (It also seems that the decorator clobbers type hints for Intellisense/Code Completion, though it's
 # possible I just haven't configured my IDE correctly)
->>>>>>> Stashed changes
 #
 # This is one for the Oncall team to decide what style they'd prefer.
 #
@@ -37,15 +30,6 @@ def room_name_normalizer():
     Decorator that, given a function that accepts a Matrix `room_name` (id or alias), normalizes the name
     to the `room_id`.
     """
-<<<<<<< Updated upstream
-    def wrapper(*args, **kwargs):
-        parent_object = args[0]
-        try:
-            normalization_function = parent_object.normalize_room_name
-        except AttributeError:
-            raise AttributeError('`@room_name_normalizer` can only be applied to functions on objects that provide a '
-                                 '`normalize_room_name` method')
-=======
     def wrapper(func):
         @wraps(func)
         async def wrapped(*args, **kwargs):
@@ -55,7 +39,6 @@ def room_name_normalizer():
             except AttributeError:
                 raise AttributeError('`@room_name_normalizer` can only be applied to functions on objects that '
                                      f'provide a `{NAME_OF_NORMALIZATION_FUNCTION}` method')
->>>>>>> Stashed changes
 
             # Check that the normalization_function has the signature that we expect -
             # otherwise, calling it below will result in some Funky Behaviour(tm)
@@ -110,6 +93,7 @@ async def _find_and_normalize_room_name_in_parameters_passed_to_func(
             if function_parameter_name == 'room_name':
                 args_as_list = list(args)  # Tuples do not support assignment
                 args_as_list[idx] = await normalization_func(positional_argument)
+                args = tuple(args_as_list)
                 break
         else:
             # ...and, if not - that is, if `room_name` was neither passed as a positional argument nor
@@ -117,4 +101,4 @@ async def _find_and_normalize_room_name_in_parameters_passed_to_func(
             # and that no value was passed for `room_name` at the call site.
             kwargs['room_name'] = await normalization_func(sig.parameters['room_name'].default)
 
-    return tuple(args_as_list), kwargs
+    return args, kwargs

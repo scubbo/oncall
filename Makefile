@@ -61,7 +61,7 @@ define run_engine_docker_command
 	$(call run_docker_compose_command,run --rm oncall_engine_commands $(1))
 endef
 
-# touch SQLITE_DB_FILE if it does not exist and DB is eqaul to SQLITE_PROFILE
+# touch SQLITE_DB_FILE if it does not exist and DB is equal to SQLITE_PROFILE
 start:
 ifeq ($(DB),$(SQLITE_PROFILE))
 	@if [ ! -f $(SQLITE_DB_FILE) ]; then \
@@ -144,6 +144,9 @@ backend-bootstrap:
 backend-migrate:
 	$(call backend_command,python manage.py migrate)
 
+make-migrations:
+	$(call backend_command,python manage.py makemigrations)
+
 run-backend-server:
 	$(call backend_command,python manage.py runserver 0.0.0.0:8080)
 
@@ -152,3 +155,10 @@ run-backend-celery:
 
 backend-command:
 	$(call backend_command,$(CMD))
+
+# Soft-restart leads to errors unless I manually rerun the migration:
+# https://github.com/grafana/oncall/issues/239
+# This should be deleted before committing since the issue is transient
+# and (hopefully) doesn't affect many other developers!
+super-restart:
+	make start; sleep 10 && docker restart oncall_db_migration && sleep 10 && docker restart oncall_engine oncall_celery grafana oncall_ui

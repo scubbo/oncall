@@ -99,12 +99,12 @@ class MatrixClient(object):
         # worth the latency gain - in particular, note that you'd have to account for
         # room-aliases, which could change without warning, so you'd need to be
         # listening for room update events in order to stay up-to-date. Better, I think,
-        # to just go to the source of truth. Until latency becomes a limiting factor) - YAGNI
+        # to just go to the source of truth. Until latency becomes a limiting factor - YAGNI
         #
         # See also the comment on `join_room` about Union-type responses encoding success/failure
-        return (await self.normalize_room_name(room_name)) in (await self.client.joined_rooms()).rooms
+        return room_name in (await self.client.joined_rooms()).rooms
 
-    async def normalize_room_name(self, room_name: str) -> str:
+    async def _normalize_room_name(self, room_name: str) -> str:
         """
         Rooms can be referred to by:
         * a room_id - a single canonical identifier for a room, of the form
