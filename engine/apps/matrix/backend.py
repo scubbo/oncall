@@ -19,10 +19,8 @@ class MatrixBackend(BaseMessagingBackend):
     templater = "apps.matrix.alert_rendering.AlertMatrixTemplater"
     template_fields = ("title", "message")
 
-
     def serialize_user(self, user):
         return {key: repr(getattr(user, key)) for key in ['user_id', 'name', 'matrix_user_identity']}
-
 
     def notify_user(self, user, alert_group, notification_policy):
         from apps.base.models import UserNotificationPolicy, UserNotificationPolicyLogRecord

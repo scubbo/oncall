@@ -15,40 +15,27 @@ from apps.user_management.models import User
 from common.custom_celery_tasks import shared_dedicated_queue_retry_task
 
 
-# MAX_RETRIES = 1 if settings.DEBUG else 10
 logger = get_task_logger(__name__)
-#
-# _client: Optional[MatrixClient] = None
-# client_lock = asyncio.Lock()
-#
-#
-# async def _initialize_client():
-#     global _client
-#     logger.critical(f'Called initialize client')
-#     async with client_lock:
-#         if _client is None:
-#             logger.critical(f'Initializing client')
-#             _client = await MatrixClient.login_with_username_and_password(
-#                 settings.MATRIX_USER_ID,
-#                 settings.MATRIX_PASSWORD,
-#                 "temporary-grafana-device-id",
-#                 settings.MATRIX_HOMESERVER
-#             )
-#             logger.critical(f'==========================================\nFinished initializing client\n==========================================')
-#
-#
-# def get_client():
-#     logger.critical('Called get_client')
-#     global _client
-#     if _client is None:
-#         logger.critical('_client is none inside get_client, starting init task')
-#         asyncio.create_task(_initialize_client())
-#         logger.critical('Init task created')
-#     while _client is None:
-#         logger.critical('Waiting on client')
-#         sleep(1)
-#     return _client
-#
+
+_client: Optional[MatrixClient] = None
+client_lock = asyncio.Lock()
+
+
+async def get_client():
+    logger.critical('Called get_client')
+    global _client
+    async with client_lock:
+        if _client is None:
+            logger.critical('_client is none inside get_client, starting init task')
+            _client = await MatrixClient.login_with_username_and_password(
+                settings.MATRIX_USER_ID,
+                settings.MATRIX_PASSWORD,
+                "temporary-grafana-device-id",
+                settings.MATRIX_HOMESERVER
+            )
+            logger.critical('Client created')
+        return _client
+
 
 @shared_dedicated_queue_retry_task(autoretry_for=(Exception,), retry_backoff=True, max_retries=1)
 async def notify_user_via_matrix(user, alert_group, notification_policy, paging_room_id, message):
@@ -60,12 +47,7 @@ async def notify_user_via_matrix(user, alert_group, notification_policy, paging_
     logger.critical(f'DEBUG - 5')
     logger.critical(f'{paging_room_id}')
 
-    client = await MatrixClient.login_with_username_and_password(
-        settings.MATRIX_USER_ID,
-        settings.MATRIX_PASSWORD,
-        "temporary-grafana-device-id",
-        settings.MATRIX_HOMESERVER
-    )
+    client = await get_client()
 
     # if not await client.is_in_room(paging_room_id):
     if not await client.is_in_room_unmodified(paging_room_id):
@@ -94,4 +76,4 @@ async def notify_user_via_matrix(user, alert_group, notification_policy, paging_
 
     await client.send_message_to_room(
         paging_room_id,
-        message+' - iteration 3, with rename')
+        message+' - iteration 5, with async singleton client')
