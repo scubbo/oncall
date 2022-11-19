@@ -2,9 +2,8 @@ import asyncio
 import logging
 
 from sys import exit
-from time import sleep
 
-from nio import AsyncClient, LoginResponse, MatrixRoom, RoomMessageText
+from nio import AsyncClient, LoginResponse
 
 from .rooms import room_name_normalizer
 
@@ -54,19 +53,21 @@ class MatrixClient(object):
     async def send_message_to_room(
             self,
             room_name: str,
-            # message_text: RoomMessageText):
-            # TODO - find out how to create a RoomMessageText properly (looks like formatting is a big deal)
-            message_text: str):
+            raw_body: str,
+            formatted_body: str = None):
         # TODO - explore the other attributes of RoomMessageText and see what use they might have
         # TODO - look into how far we should allow nio's classes to "leak" out into the app.
+        if formatted_body is None:
+            formatted_body = raw_body
+
         await self.client.room_send(
             room_id=room_name,
             message_type=ROOM_MESSAGE_TYPE,
             content={
                 "msgtype": TEXT_CONTENT_TYPE,
-                "body": message_text,
+                "body": raw_body,
                 "format": "org.matrix.custom.html",
-                "formatted_body": message_text
+                "formatted_body": formatted_body
             }
         )
 

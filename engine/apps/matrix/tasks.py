@@ -1,17 +1,12 @@
 import asyncio
 
-from time import sleep
 from typing import Optional
 
 from celery.utils.log import get_task_logger
 from django.conf import settings
 
 
-from apps.alerts.models import AlertGroup
-from apps.matrix.alert_rendering import build_message
 from apps.matrix.client import MatrixClient
-from apps.matrix.models import MatrixUserIdentity
-from apps.user_management.models import User
 from common.custom_celery_tasks import shared_dedicated_queue_retry_task
 
 
@@ -22,18 +17,15 @@ client_lock = asyncio.Lock()
 
 
 async def get_client():
-    logger.critical('Called get_client')
     global _client
     async with client_lock:
         if _client is None:
-            logger.critical('_client is none inside get_client, starting init task')
             _client = await MatrixClient.login_with_username_and_password(
                 settings.MATRIX_USER_ID,
                 settings.MATRIX_PASSWORD,
-                "temporary-grafana-device-id",
+                "grafana-matrix-integration",
                 settings.MATRIX_HOMESERVER
             )
-            logger.critical('Client created')
         return _client
 
 
@@ -41,11 +33,6 @@ async def get_client():
 async def notify_user_via_matrix(user, alert_group, notification_policy, paging_room_id, message):
     # imported here to avoid circular import error
     from apps.base.models import UserNotificationPolicy, UserNotificationPolicyLogRecord
-
-    logger.critical(f'DEBUGGG - inside notify_user_async')
-
-    logger.critical(f'DEBUG - 5')
-    logger.critical(f'{paging_room_id}')
 
     client = await get_client()
 
@@ -75,4 +62,5 @@ async def notify_user_via_matrix(user, alert_group, notification_policy, paging_
 
     await client.send_message_to_room(
         paging_room_id,
-        message+' - iteration 7, checking can join room')
+        message['raw'],
+        message['formatted'])

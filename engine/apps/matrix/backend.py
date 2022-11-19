@@ -1,5 +1,5 @@
 from apps.base.messaging import BaseMessagingBackend
-from apps.matrix.alert_rendering import build_message
+from apps.matrix.alert_rendering import build_raw_and_formatted_message
 
 import asyncio
 
@@ -39,7 +39,7 @@ class MatrixBackend(BaseMessagingBackend):
             return
 
         paging_room_id = user.matrix_user_identity.paging_room_id
-        message = build_message(alert_group, user.matrix_user_identity)
+        message = build_raw_and_formatted_message(alert_group, user.matrix_user_identity)
         # The reason for the split in logic between everything above and below this line:
         # * interactions with Django model object properties (e.g. `user.matrix_user_identity`) cannot
         #     be carried out in an async context.

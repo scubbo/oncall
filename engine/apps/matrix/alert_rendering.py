@@ -1,4 +1,11 @@
+from typing import Mapping
+
+from django.template.loader import render_to_string
+from emoji.core import emojize
+
+from apps.alerts.incident_appearance.renderers.constants import DEFAULT_BACKUP_TITLE
 from apps.alerts.incident_appearance.templaters.alert_templater import AlertTemplater
+from common.utils import convert_md_to_html, str_or_backup
 
 
 # This will be the location for customizing any rendering, by overriding methods from the base class
@@ -9,10 +16,32 @@ class AlertMatrixTemplater(AlertTemplater):
         return self.RENDER_FOR_MATRIX
 
 
-def build_message(alert_group, user_id):
+def build_raw_and_formatted_message(alert_group, user_id) -> Mapping[str, str]:
     alert = alert_group.alerts.first()
     templated_alert = AlertMatrixTemplater(alert).render()
-    return f"{user_id} {templated_alert.message}"
-    # Email Templater then calls `convert_md_to_html` and `render_to_string`
-    # but I _suspect_ we won't need that as Matrix accepts raw Markdown
 
+    title_fallback = (
+        f"#{alert_group.inside_organization_number} " f"{DEFAULT_BACKUP_TITLE} via {alert_group.channel.verbal_name}"
+    )
+
+    raw_message = templated_alert.message
+    if raw_message:
+        html_message = convert_md_to_html(templated_alert.message)
+    else:
+        html_message = None  # To avoid a NameError when passed to `str_or_backup` below
+
+    content = render_to_string(
+        "matrix_notification.html",
+        {
+            "url": alert_group.slack_permalink or alert_group.web_link,
+            "title": str_or_backup(templated_alert.title, title_fallback),
+            "message": str_or_backup(html_message, raw_message),
+            "organization": alert_group.channel.organization.org_title,
+            "integration": emojize(alert_group.channel.short_name, use_aliases=True),
+        }
+    )
+
+    return {
+        'raw': f"{user_id} {raw_message}",
+        'formatted': f"{user_id} {content}"
+    }
