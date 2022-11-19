@@ -109,8 +109,9 @@ get-invite-token:
 	$(call run_engine_docker_command,python manage.py issue_invite_for_the_frontend --override)
 
 copy-invite-token:
-	$(call run_engine_docker_command,python manage.py issue_invite_for_the_frontend --override) | \
-	grep 'Your invite token' | cut -d' ' -f4 | pbcopy
+	$(call run_engine_docker_command,python manage.py issue_invite_for_the_frontend --no-color --override) |\
+	grep 'Your invite token' | perl -pe 's/Your invite token: ([0-9a-f]*?)[^0-9a-f].*/$$1/' | pbcopy
+
 
 test:
 	$(call run_engine_docker_command,pytest)
