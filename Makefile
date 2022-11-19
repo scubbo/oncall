@@ -108,6 +108,10 @@ install-precommit-hook: install-pre-commit
 get-invite-token:
 	$(call run_engine_docker_command,python manage.py issue_invite_for_the_frontend --override)
 
+copy-invite-token:
+	$(call run_engine_docker_command,python manage.py issue_invite_for_the_frontend --override) | \
+	grep 'Your invite token' | cut -d' ' -f4 | pbcopy
+
 test:
 	$(call run_engine_docker_command,pytest)
 

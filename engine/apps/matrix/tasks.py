@@ -1,7 +1,11 @@
 import asyncio
 
+from time import sleep
+from typing import Optional
+
 from celery.utils.log import get_task_logger
 from django.conf import settings
+
 
 from apps.alerts.models import AlertGroup
 from apps.matrix.alert_rendering import build_message
@@ -14,16 +18,39 @@ from common.custom_celery_tasks import shared_dedicated_queue_retry_task
 MAX_RETRIES = 1 if settings.DEBUG else 10
 logger = get_task_logger(__name__)
 
-# TODO - make this a singleton!
-client = MatrixClient.login_with_username_and_password(
-    settings.MATRIX_USER_ID,
-    settings.MATRIX_PASSWORD,
-    "temporary-grafana-device-id",
-    settings.MATRIX_HOMESERVER
-)
+_client: Optional[MatrixClient] = None
+client_lock = asyncio.Lock()
 
 
-@shared_dedicated_queue_retry_task(autoretry_for=(Exception,), retry_backoff=True, max_retries=MAX_RETRIES)
+async def _initialize_client():
+    global _client
+    logger.critical(f'Called initialize client')
+    async with client_lock:
+        if _client is None:
+            logger.critical(f'Initializing client')
+            _client = await MatrixClient.login_with_username_and_password(
+                settings.MATRIX_USER_ID,
+                settings.MATRIX_PASSWORD,
+                "temporary-grafana-device-id",
+                settings.MATRIX_HOMESERVER
+            )
+            logger.critical(f'==========================================\nFinished initializing client\n==========================================')
+
+
+def get_client():
+    logger.critical('Called get_client')
+    global _client
+    if _client is None:
+        logger.critical('_client is none inside get_client, starting init task')
+        asyncio.create_task(_initialize_client())
+        logger.critical('Init task created')
+    while _client is None:
+        logger.critical('Waiting on client')
+        sleep(1)
+    return _client
+
+
+# @shared_dedicated_queue_retry_task(autoretry_for=(Exception,), retry_backoff=True, max_retries=MAX_RETRIES)
 def notify_user_via_celery(user_pk, alert_group_pk, notification_policy_pk):
     from apps.base.models import UserNotificationPolicy, UserNotificationPolicyLogRecord
 
@@ -76,7 +103,6 @@ async def notify_user_async(user, alert_group, notification_policy):
     from apps.base.models import UserNotificationPolicy, UserNotificationPolicyLogRecord
 
     logger.critical(f'DEBUGGG - inside notify_user_async')
-    logger.critical(f'{asyncio.get_event_loop().is_running()}')
 
     identity = user.matrix_user_identity
     paging_room_id = identity.paging_room_id
@@ -84,7 +110,12 @@ async def notify_user_async(user, alert_group, notification_policy):
     logger.critical(f'DEBUG - 5')
     logger.critical(f'{paging_room_id}')
 
-    if not await client.is_in_room(paging_room_id):
+    logger.critical(f'Client is {_client}')
+    client = get_client()
+    logger.critical(client)
+
+    # if not await client.is_in_room(paging_room_id):
+    if not await client.is_in_room_unmodified(paging_room_id):
         # TODO - error checking is particularly important here - you can visually check that your user_id
         # exists and is correct, but you can't check that the bot's able to join a room without actually having it
         # try to do so.

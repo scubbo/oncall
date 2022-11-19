@@ -2,7 +2,7 @@ import asyncio
 import logging
 
 from sys import exit
-
+from time import sleep
 
 from nio import AsyncClient, LoginResponse, MatrixRoom, RoomMessageText
 
@@ -17,28 +17,17 @@ logger = logging.getLogger(__name__)
 class MatrixClient(object):
     def __init__(
             self,
-            user_id: str,
-            access_token: str,
-            device_id: str,
-            homeserver: str
+            client: AsyncClient
     ):
-        self.client = AsyncClient(homeserver)
-        self.client.user_id = user_id
-        self.client.access_token = access_token
-        self.client.device_id = device_id
+        self.client = client
 
     @classmethod
-    def _from_login_response(cls, resp: LoginResponse, homeserver: str):
-        return MatrixClient(resp.user_id, resp.access_token, resp.device_id, homeserver)
-
-    @classmethod
-    def login_with_username_and_password(
+    async def login_with_username_and_password(
             cls,
             user_id: str,  # @user:example.org
             password: str,
             device_name: str,
             homeserver: str
-
     ):
         """
         TODO: find a way to use OAuth (or some other more-secure-than-passwords-in-env-variables)
@@ -51,13 +40,11 @@ class MatrixClient(object):
         # We force this async function to run synchronously, since this method will be called
         # from (e.g.) `__init__` methods, which do not play nicely with async:
         # https://stackoverflow.com/questions/33128325/how-to-set-class-attribute-with-await-in-init
-        resp: LoginResponse = asyncio.get_event_loop().run_until_complete(
-            client.login(password, device_name=device_name))
+        resp: LoginResponse = await client.login(password, device_name=device_name)
 
         # check that we logged in succesfully
         if isinstance(resp, LoginResponse):
-            print(resp)
-            return MatrixClient._from_login_response(resp, homeserver)
+            return MatrixClient(client)
         else:
             print(f'homeserver = "{homeserver}"; user = "{user_id}"')
             print(f"Failed to log in: {resp}")
@@ -105,6 +92,14 @@ class MatrixClient(object):
         # See also the comment on `join_room` about Union-type responses encoding success/failure
         return room_name in (await self.client.joined_rooms()).rooms
 
+    async def is_in_room_unmodified(self, room_name: str):
+        logger.critical(f'In unmodified function')
+        normalized_room_name = await self._normalize_room_name(room_name)
+        logger.critical(f'{normalized_room_name=}')
+        rooms = (await self.client.joined_rooms()).rooms
+        logger.critical(f'{rooms=}')
+        return normalized_room_name in rooms
+
     async def _normalize_room_name(self, room_name: str) -> str:
         """
         Rooms can be referred to by:
@@ -123,7 +118,7 @@ class MatrixClient(object):
         # TODO - (maybe) expand this to accept identifiers without the homeserver domain?
         # Or handle that upstream in the UI and only use, uhh, FQRNs internally?
         logger.critical(f'_normalize... called with {room_name=}')
-        logger.critical(f'{asyncio.get_event_loop().is_running()}')
+        logger.critical(f'is event loop running? {asyncio.get_event_loop().is_running()}')
         if room_name.startswith("!"):
             return room_name
         normalization_response = await self.client.room_resolve_alias(room_name)

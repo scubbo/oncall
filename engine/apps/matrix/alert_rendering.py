@@ -6,7 +6,7 @@ class AlertMatrixTemplater(AlertTemplater):
     RENDER_FOR_MATRIX = "matrix"
 
     def _render_for(self):
-        return self.REDNER_FOR_MATRIX
+        return self.RENDER_FOR_MATRIX
 
 
 def build_message(alert_group, user_id):
