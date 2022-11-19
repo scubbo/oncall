@@ -24,6 +24,8 @@ from typing import Any, Callable, List, Mapping
 
 NAME_OF_NORMALIZATION_FUNCTION = '_normalize_room_name'
 
+import logging
+logger = logging.getLogger(__name__)
 
 def room_name_normalizer():
     """
@@ -33,6 +35,7 @@ def room_name_normalizer():
     def wrapper(func):
         @wraps(func)
         async def wrapped(*args, **kwargs):
+            print(f'DEBUG - wrapped called with {args=}, {kwargs=}')
             parent_object = args[0]
             try:
                 normalization_function = getattr(parent_object, NAME_OF_NORMALIZATION_FUNCTION)
@@ -60,6 +63,7 @@ def room_name_normalizer():
             new_args, new_kwargs = await _find_and_normalize_room_name_in_parameters_passed_to_func(
                 func, normalization_function, *args, **kwargs
             )
+            logger.critical(f'DEBUG - output of wrapped is {args=}, {kwargs=}')
             return await func(*new_args, **new_kwargs)
 
         return wrapped
@@ -88,8 +92,10 @@ async def _find_and_normalize_room_name_in_parameters_passed_to_func(
         # here we are checking the first n signature arguments, where n is the number of positional
         # arguments passed at the call site). If we find signature parameter named 'room_name',
         # normalize the corresponding input positional argument...
+        logger.critical(f'DEBUG in find_ - 1')
         sig = signature(func)
         for idx, (positional_argument, function_parameter_name) in enumerate(zip(args, sig.parameters)):
+            logger.critical(f'DEBUG in find_ - 2: {positional_argument=}')
             if function_parameter_name == 'room_name':
                 args_as_list = list(args)  # Tuples do not support assignment
                 args_as_list[idx] = await normalization_func(positional_argument)

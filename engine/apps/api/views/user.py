@@ -604,11 +604,6 @@ class UserView(
         is entered in the UI.
         """
         user = self.get_object()
-        logger.fatal('==============================================\n==============================================')
-        logger.fatal(f'DEBUG - retrieved user: {user=}')
-        logger.fatal(f'{args=}')
-        logger.fatal(f'{kwargs=}')
-        logger.fatal('==============================================\n==============================================')
         # (Attempt to) avoid race-conditions by fast-returning if the user already has
         # a matrix_user_identity associated (I _guess_ we cannot 100% depend on this
         # without proper concurrency primitives like locks, but this is probably good
@@ -617,7 +612,7 @@ class UserView(
         if user.matrix_user_identity:
             return Response({"id": user.matrix_user_identity.id}, status=status.HTTP_200_OK)
 
-        matrix_user_id = MatrixUserIdentity(user_id=None, paging_room=None)
+        matrix_user_id = MatrixUserIdentity(user_id=None, paging_room_id=None)
         matrix_user_id.save()
         logger.fatal(f'DEBUGG - created a new matrix_user_id: {matrix_user_id=}')
 

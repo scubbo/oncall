@@ -89,7 +89,8 @@ class MatrixClient(object):
         # than Pythonic. If we wanted to check return type and take differing action
         # based on that, this would probably be the place to check and throw an Exception.
         # I'll leave it up to the Oncall team what code style they want.
-        return await self.join_room(room_name)
+        print(f'DEBUG - trying to join room (should be normalized): {room_name=}')
+        return await self.client.join(room_name)
 
     @room_name_normalizer()
     async def is_in_room(self, room_name: str):
@@ -121,11 +122,11 @@ class MatrixClient(object):
         # TODO - repeated points about exceptions vs. Union-type response
         # TODO - (maybe) expand this to accept identifiers without the homeserver domain?
         # Or handle that upstream in the UI and only use, uhh, FQRNs internally?
+        logger.critical(f'_normalize... called with {room_name=}')
+        logger.critical(f'{asyncio.get_event_loop().is_running()}')
         if room_name.startswith("!"):
             return room_name
         normalization_response = await self.client.room_resolve_alias(room_name)
-        print(f'{normalization_response=}')
-        print(f'{normalization_response.room_id=}')
+        logger.critical(f'{normalization_response=}')
+        logger.critical(f'{normalization_response.room_id=}')
         return normalization_response.room_id
-
-

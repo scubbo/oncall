@@ -5,7 +5,6 @@ from apps.api.permissions import MODIFY_ACTIONS, READ_ACTIONS, ActionPermission,
 from apps.api.serializers.matrix_user_identity import MatrixUserIdentitySerializer
 from apps.auth_token.auth import PluginAuthentication
 from apps.matrix.models import MatrixUserIdentity
-# from common.insight_log import EntityEvent, write_resource_insight_log
 
 import logging
 
@@ -14,7 +13,6 @@ logger = logging.getLogger(__name__)
 
 class MatrixUserIdentityView(
     mixins.UpdateModelMixin,
-    # viewsets.ModelViewSet
     viewsets.GenericViewSet,
 ):
     authentication_classes = (PluginAuthentication,)
