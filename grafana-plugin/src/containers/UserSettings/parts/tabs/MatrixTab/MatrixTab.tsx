@@ -26,56 +26,26 @@ export const MatrixInfo = observer((props: MatrixInfoProps) => {
   const user = userStore.items[userPk];
   const user_matrix_identity = user.matrix_user_identity
 
-
-  const getMatrixIdentityUserIdUpdateHandler = useCallback(
+  // TODO: Try using `keyof typeof user_matrix_identity` here?
+  const getMatrixIdentityGenericUpdateHandler = (id_type: 'user_id' | 'paging_room_id') => useCallback(
+    // "Given an id-type, return a function that will update that id-type for the user"
     async (event) => {
-      const updated_matrix_user_id = event.target.value;
+      const updated_id = event.target.value;
 
       var matrixUserIdPrimaryKey = user.matrix_user_identity?.id;
-      console.log('Current userId PrimaryKey is ' + matrixUserIdPrimaryKey);
-
       if (matrixUserIdPrimaryKey == null) {
         // User has no associated MatrixUserId - create one for them
         const createMatrixUserIdentityResponse = await userStore.createEmptyMatrixUserIdentity(user);
-        console.log(createMatrixUserIdentityResponse);
         matrixUserIdPrimaryKey = createMatrixUserIdentityResponse.id
-        console.log('primary key of new matrix_user_id is now ');
-        console.log(matrixUserIdPrimaryKey);
       }
 
-      await matrixStore.updateMatrixUserIdentity(matrixUserIdPrimaryKey, {
-        user_id: updated_matrix_user_id,
-      });
-
+      var update_payload = {}
+      update_payload[id_type] = updated_id
+      await matrixStore.updateMatrixUserIdentity(matrixUserIdPrimaryKey, update_payload)
     },
     [user, userStore.createEmptyMatrixUserIdentity, matrixStore.updateMatrixUserIdentity]
   )
 
-  // TODO - this has exactly the same logic, modulo subbing "paging_room_id" for "user_id".
-  // Use currying to extract this to a single method.
-  const getMatrixIdentityPagingRoomIdUpdateHandler = useCallback(
-      async (event) => {
-        const updated_paging_room_id = event.target.value;
-
-        var matrixUserIdPrimaryKey = user.matrix_user_identity?.id;
-        console.log('Current userId PrimaryKey is ' + matrixUserIdPrimaryKey);
-
-        if (matrixUserIdPrimaryKey == null) {
-          // User has no associated MatrixUserId - create one for them
-          const createMatrixUserIdentityResponse = await userStore.createEmptyMatrixUserIdentity(user);
-          console.log(createMatrixUserIdentityResponse);
-          matrixUserIdPrimaryKey = createMatrixUserIdentityResponse.id
-          console.log('primary key of new matrix_user_id is now ');
-          console.log(matrixUserIdPrimaryKey);
-        }
-
-        await matrixStore.updateMatrixUserIdentity(matrixUserIdPrimaryKey, {
-          paging_room_id: updated_paging_room_id
-        });
-
-      },
-      [user, userStore.createEmptyMatrixUserIdentity, matrixStore.updateMatrixUserIdentity]
-    )
 
   return (
     <VerticalGroup>
@@ -87,7 +57,7 @@ export const MatrixInfo = observer((props: MatrixInfoProps) => {
 
         <Input
           autoFocus
-          onChange={getMatrixIdentityUserIdUpdateHandler}
+          onChange={getMatrixIdentityGenericUpdateHandler('user_id')}
           placeholder={user_matrix_identity == null ? "@username:example.org" : user_matrix_identity.user_id }
         />
 
@@ -105,7 +75,7 @@ export const MatrixInfo = observer((props: MatrixInfoProps) => {
         </Text>
 
         <Input
-          onChange={getMatrixIdentityPagingRoomIdUpdateHandler}
+          onChange={getMatrixIdentityGenericUpdateHandler('paging_room_id'}
           placeholder={user_matrix_identity == null ? "#room-alias:example.org" : user_matrix_identity.paging_room_id }
         />
 
