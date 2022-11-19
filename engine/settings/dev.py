@@ -67,7 +67,6 @@ if os.environ.get("FEATURE_MATRIX_INTEGRATION_ENABLED", "false").lower() != "fal
     MATRIX_USER_ID = os.environ.get("MATRIX_USER_ID")
     MATRIX_PASSWORD = os.environ.get("MATRIX_PASSWORD")
     MATRIX_HOMESERVER = os.environ.get("MATRIX_HOMESERVER")
-    MATRIX_ROOM_ID = os.environ.get("MATRIX_ROOM_ID")
 
 if TESTING:
     EXTRA_MESSAGING_BACKENDS = [("apps.base.tests.messaging_backend.TestOnlyBackend", 42)]

@@ -49,8 +49,7 @@ async def notify_user_via_matrix(user, alert_group, notification_policy, paging_
 
     client = await get_client()
 
-    # if not await client.is_in_room(paging_room_id):
-    if not await client.is_in_room_unmodified(paging_room_id):
+    if not await client.is_in_room(paging_room_id):
         # TODO - error checking is particularly important here - you can visually check that your user_id
         # exists and is correct, but you can't check that the bot's able to join a room without actually having it
         # try to do so.
@@ -76,4 +75,4 @@ async def notify_user_via_matrix(user, alert_group, notification_policy, paging_
 
     await client.send_message_to_room(
         paging_room_id,
-        message+' - iteration 5, with async singleton client')
+        message+' - iteration 7, checking can join room')

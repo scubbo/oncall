@@ -60,7 +60,6 @@ class LiveSetting(models.Model):
         "MATRIX_USER_ID",
         "MATRIX_PASSWORD",
         "MATRIX_HOMESERVER",
-        "MATRIX_ROOM_ID",
     )
 
     DESCRIPTIONS = {
@@ -146,7 +145,6 @@ class LiveSetting(models.Model):
         "MATRIX_USER_ID": "Matrix Username",
         "MATRIX_PASSWORD": "Matrix Password",
         "MATRIX_HOMESERVER": "Matrix Homeserver",
-        "MATRIX_ROOM_ID": "ID of main room for Matrix Notifications",
     }
 
     SECRET_SETTING_NAMES = (
